@@ -66,6 +66,7 @@ public class OpenTriviaApi : ITriviaApi
         {
             AddParameter($"{item.Key}={item.Value}");
         }
+        content.Clear();
     }
     void AddParameter(string param)
     {

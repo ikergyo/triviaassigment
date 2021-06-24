@@ -7,22 +7,18 @@ public class GameController : MonoBehaviour
 {
 
     const string anyCategory = "Any Category";
+    const float timePerQuestions = 10f;
 
     [SerializeField]
     UIController uic;
 
     ITriviaApi triviaApi;
-    Question[] questions;
     List<Category> categories;
-    Player[] players;
 
-    int questionNum = 0;
-    int roundCounter = 0;
+    bool isStateInitialized = false;
 
-    public Question NextQuestion()
-    {
-        return null;
-    }
+    GameState gameState;
+
 
     // Start is called before the first frame update
     async void Start()
@@ -40,34 +36,81 @@ public class GameController : MonoBehaviour
     public async Task InitializeGameAsync(string amount, string category, int playerCount = 1)
     {
         uic.SetActivePanel("LoadingPanel");
-        questions = await triviaApi.GetQuestions(amount, category);
-        questionNum = questions.Length;
-        InitializePlayers(playerCount);
+        Question[] questions = await triviaApi.GetQuestions(amount, category);
+        gameState = new GameState(playerCount, questions, timePerQuestions);
+        AnswerScript.SubscribeToPressedEvent(OnClickAnswerPressed);
+        UIPopUpHandler.SubscribeToPressedEvent(OnClickPopUpPressed);
         NextRound();
+        isStateInitialized = true;
         uic.SetActivePanel("QuizPanel");
+        uic.InitializeQuiz(gameState.QuestionCount);
     }
 
-    void InitializePlayers(int playerCount)
+    void Update()
     {
-        players = new Player[playerCount];
-        for (int i = 0; i < playerCount; i++)
+        if (!isStateInitialized)
+            return;
+        if (!gameState.IsRoundActive)
+            return;
+        float delta = Time.deltaTime;
+        uic.RefreshTime(gameState.ActualPlayer);
+        if (!gameState.ElapseTime(delta))
         {
-            players[i] = new Player();
+            NextRound();
         }
+    }
+
+    public void NextQuestion()
+    {
+        Question question = gameState.NextQuestion();
+        Answer[] answers = GenerateAnswers(question);        
+        uic.ShowQuestion(question.question, gameState.QuestionCounter, answers);
     }
 
     void NextRound()
     {
-        if (!(roundCounter < questionNum))
+        gameState.IsRoundActive = false;
+        if (!gameState.NextPlayer() || gameState.IsQuestionNull())
         {
-            Finish();
+            FinishQuestion();
             return;
         }
-        Question currentQuestion = questions[roundCounter];
-        Answer[] answers = GenerateAnswers(currentQuestion);
-        uic.ShowQuestion(currentQuestion.question, answers);
+        uic.ShowRound(gameState.ActualPlayer);
+    }
+    void FinishQuestion()
+    {
+        if (gameState.IsGameEnd())
+        {
+            FinishGame();
+            return;
+        }
+        NextQuestion();
+        NextRound();
+    }
+    void FinishGame()
+    {
+        UninitializeGame();
+        uic.ShowResult(gameState.Players);
+        uic.SetActivePanel("MenuPanel");
+    }
+   
+    void OnClickAnswerPressed(Answer answer)
+    {
+        if (answer.IsCorrect)
+            gameState.IncreasePlayerScore();
+        NextRound();
+    }
+    void OnClickPopUpPressed(MessageType messageType)
+    {
+        if(messageType == MessageType.RoundStart)
+            gameState.IsRoundActive = true;
+    }
 
-        roundCounter++;
+    void UninitializeGame()
+    {
+        AnswerScript.UnsubscribeFromPressedEvent(OnClickAnswerPressed);
+        UIPopUpHandler.UnsubscribeFromPressedEvent(OnClickPopUpPressed);
+        isStateInitialized = false;
     }
 
     Answer[] GenerateAnswers(Question question)
@@ -87,11 +130,8 @@ public class GameController : MonoBehaviour
         return answers;
     }
 
-    void Finish()
-    {
-
-    }
 
 
-    
+
+
 }

@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+public delegate void AnswerPressedDelegate(Answer answer);
+
 public class AnswerScript : MonoBehaviour
 {
     [SerializeField]
@@ -13,6 +15,17 @@ public class AnswerScript : MonoBehaviour
     Image sourceImage;
 
     public Answer Answer { get => answer; }
+
+    static event AnswerPressedDelegate AnswerPressedEvent;
+
+    public static void SubscribeToPressedEvent(AnswerPressedDelegate pressedAction)
+    {
+        AnswerPressedEvent += pressedAction;
+    }
+    public static void UnsubscribeFromPressedEvent(AnswerPressedDelegate pressedAction)
+    {
+        AnswerPressedEvent -= pressedAction;
+    }
 
     void Start()
     {
@@ -36,6 +49,6 @@ public class AnswerScript : MonoBehaviour
 
     public void OnClickAnswer()
     {
-
+        AnswerPressedEvent?.Invoke(answer);
     }
 }

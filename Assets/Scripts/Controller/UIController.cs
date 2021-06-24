@@ -16,7 +16,7 @@ public class UIController : MonoBehaviour
     List<GameObject> panels;
 
     [SerializeField]
-    UIErrorHandler errorHandler;
+    UIPopUpHandler popUpHandler;
 
     #region MenuPanel
     [SerializeField]
@@ -24,6 +24,9 @@ public class UIController : MonoBehaviour
 
     [SerializeField]
     TMP_Dropdown categoriesField;
+
+    [SerializeField]
+    TMP_InputField playerCountField;
     #endregion
 
     #region QuizPanel
@@ -38,6 +41,24 @@ public class UIController : MonoBehaviour
 
     [SerializeField]
     TMP_Text questionField;
+
+    [SerializeField]
+    TMP_Text maxQuestionField;
+
+    [SerializeField]
+    TMP_Text questionCountField;
+
+    [SerializeField]
+    TMP_Text maxScoreField;
+
+    [SerializeField]
+    TMP_Text scoreCountField;
+
+    [SerializeField]
+    TMP_Text playerDetailsField;
+
+    [SerializeField]
+    TMP_Text timerField;
     #endregion
 
     event StartGaneEventHandler StartEventAsync;
@@ -49,30 +70,7 @@ public class UIController : MonoBehaviour
         InitializeActivePanel();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-    public void ShowQuestion(string question, Answer[] answers)
-    {
-        ClearGrid();
-        for (int i = 0; i < answers.Length; i++)
-        {
-            var prefab = Instantiate(answerPrefab);
-            AnswerScript ansScr = prefab.GetComponent<AnswerScript>();
-            ansScr.AddAnswer(answers[i]);
-            ansScr.transform.parent = answerGrid.transform;
-        }
-        questionField.text = question;
-    }
-    void ClearGrid()
-    {
-        foreach (Transform child in answerGrid.transform)
-        {
-            GameObject.Destroy(child.gameObject);
-        }
-    }
+    #region Common Methods
     void InitializeActivePanel()
     {
         foreach (var panel in panels)
@@ -84,19 +82,77 @@ public class UIController : MonoBehaviour
             }
         }
     }
+
     public void SetActivePanel(string tag)
     {
         activePanel?.SetActive(false);
         foreach (var panel in panels)
         {
-            if(panel.tag == tag)
+            if (panel.tag == tag)
             {
                 panel.SetActive(true);
+                activePanel = panel;
                 return;
             }
         }
+    }
+    #endregion
+
+    #region QuizMethods
+    public void InitializeQuiz(int questionCount)
+    {
+        maxQuestionField.text = maxScoreField.text = questionCount.ToString();
+        questionCountField.text = 0.ToString();
+    }
+
+    public void ShowQuestion(string question, int questionNumber, Answer[] answers)
+    {
+        ClearGrid();
+        for (int i = 0; i < answers.Length; i++)
+        {
+            var prefab = Instantiate(answerPrefab);
+            AnswerScript ansScr = prefab.GetComponent<AnswerScript>();
+            ansScr.AddAnswer(answers[i]);
+            ansScr.transform.parent = answerGrid.transform;
+        }
+        questionField.text = question;
+        questionCountField.text = questionNumber.ToString();
+    }
+    public void ShowRound(Player player)
+    {
+        playerDetailsField.text = player.Name;
+        scoreCountField.text = player.Score.ToString();
+        popUpHandler.ShowMessage("Round", player.Name + "'s round", MessageType.RoundStart);
+    }
+
+    public void RefreshTime(Player player)
+    {
+        float time = player.RemainedTime;
+        float minutes = Mathf.FloorToInt(time / 60);
+        float seconds = Mathf.FloorToInt(time % 60);
+        string rTime = String.Format("{0:00}:{1:00}", minutes, seconds);
+        timerField.text = rTime;
+    }
+    public void ShowResult(Player[] players)
+    {
+        string resultMessage = "";
+        for (int i = 0; i < players.Length; i++)
+        {
+            resultMessage += "Player: " + players[i].Name + ", score: " + players[i].Score + System.Environment.NewLine;
+        }
+        popUpHandler.ShowMessage("Result", resultMessage, MessageType.Info);
 
     }
+    void ClearGrid()
+    {
+        foreach (Transform child in answerGrid.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+    }
+    #endregion
+
+    #region Menu Methods
     public void UpdateCategories(List<Category> categories)
     {
         categoriesField.ClearOptions();
@@ -113,11 +169,13 @@ public class UIController : MonoBehaviour
         StartEventAsync += action;
     }
 
-    public bool ValidateMenuForm(string amount, string category)
+    public bool ValidateMenuForm(string amount, string category, string playersCount)
     {
         if (!int.TryParse(amount, out int am) || am <= 0)
             return false;
         if (category == "Loading...")
+            return false;
+        if (!int.TryParse(amount, out int playersNum) || am <= 0)
             return false;
         return true;
     }
@@ -126,11 +184,14 @@ public class UIController : MonoBehaviour
     {
         string amount = amountField.text;
         string category = categoriesField.options[categoriesField.value].text;
-        if(!ValidateMenuForm(amount, category))
+        string playersCount = playerCountField.text;
+        if(!ValidateMenuForm(amount, category, playersCount))
         {
-            errorHandler.ShowError("Amount is not valid, or there is no category selected (it is still loading the categories)");
+            popUpHandler.ShowError("Amount is not valid or number of players is not valid, or there is no category selected (it is still loading the categories)");
             return;
         }
-        await StartEventAsync?.Invoke(amount, category, 1);
+        await StartEventAsync?.Invoke(amount, category, int.Parse(playersCount));
     }
+    #endregion
+
 }
