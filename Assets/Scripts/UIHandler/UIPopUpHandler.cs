@@ -4,46 +4,55 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public enum MessageType { Error, Info, RoundStart}
-public delegate void PopUpButtonPressedDelegate(MessageType messageType);
+public enum MessageType { Error, Info, RoundStart, RoundEnd, QuestionStart, QuestionEnd }
+public delegate void UIPopUpButtonPressedDelegate(MessageType messageType);
 
 public class UIPopUpHandler : MonoBehaviour
 {
 
     [SerializeField]
-    TMP_Text titleField;
+    GameObject popUpPrefab;
 
-    [SerializeField]
-    TMP_Text messageField;
+    List<GameObject> activePopUps;
 
-    MessageType lastMessageType;
+    event UIPopUpButtonPressedDelegate OkPressedEvent;
 
-    static event PopUpButtonPressedDelegate OkPressedEvent;
-    public static void SubscribeToPressedEvent(PopUpButtonPressedDelegate pressedAction)
+    private void Awake()
+    {
+        activePopUps = new List<GameObject>();
+    }
+
+    public void SubscribeToPressedEvent(UIPopUpButtonPressedDelegate pressedAction)
     {
         OkPressedEvent += pressedAction;
     }
-    public static void UnsubscribeFromPressedEvent(PopUpButtonPressedDelegate pressedAction)
+    public void UnsubscribeFromPressedEvent(UIPopUpButtonPressedDelegate pressedAction)
     {
         OkPressedEvent -= pressedAction;
     }
 
-    public void ShowMessage(string title, string message, MessageType type)
+    public void ShowMessage(string title, string message,string buttonText, MessageType type)
     {
-        titleField.text = title;
-        messageField.text = message;
         this.gameObject.SetActive(true);
-        lastMessageType = type;
+        GameObject popUp = Instantiate(popUpPrefab,this.transform);
+        popUp.transform.SetAsFirstSibling();
+        activePopUps.Add(popUp);
+        PopUpScript pus = popUp.GetComponent<PopUpScript>();
+        pus.SubscribeToPressedEvent(OnClickOk);
+        pus.ShowMessage(title, message, buttonText, type);
     }
 
     public void ShowError(string message)
     {
-        ShowMessage("Error", message, MessageType.Error);
+        ShowMessage("Error", message, "Ok", MessageType.Error);
     }
-    public void OnClickOk()
+    public void OnClickOk(GameObject gObject, MessageType type)
     {
-        this.gameObject.SetActive(false);
-        OkPressedEvent?.Invoke(lastMessageType);
+        activePopUps.Remove(gObject);
+        Destroy(gObject);
+        if (activePopUps.Count == 0)
+            this.gameObject.SetActive(false);
+        OkPressedEvent?.Invoke(type);
     }
 
 }

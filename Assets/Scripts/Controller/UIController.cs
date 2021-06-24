@@ -96,6 +96,14 @@ public class UIController : MonoBehaviour
             }
         }
     }
+    public void SubscribeToPopUp(UIPopUpButtonPressedDelegate buttonPressed)
+    {
+        popUpHandler.SubscribeToPressedEvent(buttonPressed);
+    }
+    public void UnsubscribeFromPopUp(UIPopUpButtonPressedDelegate buttonPressed)
+    {
+        popUpHandler.UnsubscribeFromPressedEvent(buttonPressed);
+    }
     #endregion
 
     #region QuizMethods
@@ -118,11 +126,23 @@ public class UIController : MonoBehaviour
         questionField.text = question;
         questionCountField.text = questionNumber.ToString();
     }
-    public void ShowRound(Player player)
+
+    internal void UnsubscribeFromPressedEvent(Action<MessageType> onClickPopUpPressed)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ShowPlayerStart(Player player)
     {
         playerDetailsField.text = player.Name;
         scoreCountField.text = player.Score.ToString();
-        popUpHandler.ShowMessage("Round", player.Name + "'s round", MessageType.RoundStart);
+        popUpHandler.ShowMessage("Round", player.Name + "'s round", "Ok", MessageType.RoundStart);
+    }
+
+    public void ShowQuestionDetails(Question question)
+    {
+        string questionString = "Round completed, the correct answer was: " + question.correct_answer;
+        popUpHandler.ShowMessage("Next question", questionString, "Next", MessageType.QuestionEnd);
     }
 
     public void RefreshTime(Player player)
@@ -140,7 +160,7 @@ public class UIController : MonoBehaviour
         {
             resultMessage += "Player: " + players[i].Name + ", score: " + players[i].Score + System.Environment.NewLine;
         }
-        popUpHandler.ShowMessage("Result", resultMessage, MessageType.Info);
+        popUpHandler.ShowMessage("Result", resultMessage, "Done", MessageType.Info);
 
     }
     void ClearGrid()
@@ -175,7 +195,7 @@ public class UIController : MonoBehaviour
             return false;
         if (category == "Loading...")
             return false;
-        if (!int.TryParse(amount, out int playersNum) || am <= 0)
+        if (!int.TryParse(playersCount, out int playersNum) || playersNum <= 0)
             return false;
         return true;
     }

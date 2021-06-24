@@ -39,7 +39,7 @@ public class GameController : MonoBehaviour
         Question[] questions = await triviaApi.GetQuestions(amount, category);
         gameState = new GameState(playerCount, questions, timePerQuestions);
         AnswerScript.SubscribeToPressedEvent(OnClickAnswerPressed);
-        UIPopUpHandler.SubscribeToPressedEvent(OnClickPopUpPressed);
+        uic.SubscribeToPopUp(OnClickPopUpPressed);
         NextRound();
         isStateInitialized = true;
         uic.SetActivePanel("QuizPanel");
@@ -75,10 +75,12 @@ public class GameController : MonoBehaviour
             FinishQuestion();
             return;
         }
-        uic.ShowRound(gameState.ActualPlayer);
+        uic.ShowPlayerStart(gameState.ActualPlayer);
     }
     void FinishQuestion()
     {
+        if(!gameState.IsQuestionNull())
+            uic.ShowQuestionDetails(gameState.CurrentQuestion);
         if (gameState.IsGameEnd())
         {
             FinishGame();
@@ -109,7 +111,7 @@ public class GameController : MonoBehaviour
     void UninitializeGame()
     {
         AnswerScript.UnsubscribeFromPressedEvent(OnClickAnswerPressed);
-        UIPopUpHandler.UnsubscribeFromPressedEvent(OnClickPopUpPressed);
+        uic.UnsubscribeFromPopUp(OnClickPopUpPressed);
         isStateInitialized = false;
     }
 
