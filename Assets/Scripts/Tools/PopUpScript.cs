@@ -32,7 +32,13 @@ public class PopUpScript : MonoBehaviour
     {
         OkPressedEvent -= pressedAction;
     }
-
+    /// <summary>
+    /// Showing the message in the popup window. Setting up the neccesaryy UI fields of the PopUp window
+    /// </summary>
+    /// <param name="title">Title of the popup window</param>
+    /// <param name="message">Message</param>
+    /// <param name="buttonText">Text of the popup button</param>
+    /// <param name="type">Type of the message, stage of the gameplay</param>
     public void ShowMessage(string title, string message, string buttonText, MessageType type)
     {
         titleField.text = title;
@@ -41,7 +47,9 @@ public class PopUpScript : MonoBehaviour
         this.gameObject.SetActive(true);
         this.type = type;
     }
-
+    /// <summary>
+    /// Subscribed method to the PopUp button on click event
+    /// </summary>
     public void OnClickOk()
     {
         this.gameObject.SetActive(false);

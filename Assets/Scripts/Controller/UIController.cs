@@ -71,6 +71,9 @@ public class UIController : MonoBehaviour
     }
 
     #region Common Methods
+    /// <summary>
+    /// Setting up the first panel, as an active panel. It search the first panel which is active.
+    /// </summary>
     void InitializeActivePanel()
     {
         foreach (var panel in panels)
@@ -82,7 +85,10 @@ public class UIController : MonoBehaviour
             }
         }
     }
-
+    /// <summary>
+    /// Change the active panel.
+    /// </summary>
+    /// <param name="tag">Tag of the requested active panel. It will be the new active panel</param>
     public void SetActivePanel(string tag)
     {
         activePanel?.SetActive(false);
@@ -96,10 +102,18 @@ public class UIController : MonoBehaviour
             }
         }
     }
+    /// <summary>
+    /// Subscribe to the on click event of the popup buttons
+    /// </summary>
+    /// <param name="buttonPressed">Callback function for the on click</param>
     public void SubscribeToPopUp(UIPopUpButtonPressedDelegate buttonPressed)
     {
         popUpHandler.SubscribeToPressedEvent(buttonPressed);
     }
+    /// <summary>
+    /// Unsubscribe from the popup's on click buttons
+    /// </summary>
+    /// <param name="buttonPressed"></param>
     public void UnsubscribeFromPopUp(UIPopUpButtonPressedDelegate buttonPressed)
     {
         popUpHandler.UnsubscribeFromPressedEvent(buttonPressed);
@@ -107,12 +121,21 @@ public class UIController : MonoBehaviour
     #endregion
 
     #region QuizMethods
+    /// <summary>
+    /// Setting up the max scores and questions.
+    /// </summary>
+    /// <param name="questionCount"></param>
     public void InitializeQuiz(int questionCount)
     {
         maxQuestionField.text = maxScoreField.text = questionCount.ToString();
         questionCountField.text = 0.ToString();
     }
-
+    /// <summary>
+    /// Showing the question sent by parameter.
+    /// </summary>
+    /// <param name="question">Question which will be showed</param>
+    /// <param name="questionNumber">Actual question number</param>
+    /// <param name="answers">Answers for answer prefabs</param>
     public void ShowQuestion(string question, int questionNumber, Answer[] answers)
     {
         ClearGrid();
@@ -126,25 +149,29 @@ public class UIController : MonoBehaviour
         questionField.text = question;
         questionCountField.text = questionNumber.ToString();
     }
-
-    internal void UnsubscribeFromPressedEvent(Action<MessageType> onClickPopUpPressed)
-    {
-        throw new NotImplementedException();
-    }
-
+    /// <summary>
+    /// Showing player informations. Creating a popup about the next round, which player will come.
+    /// </summary>
+    /// <param name="player">Actual player</param>
     public void ShowPlayerStart(Player player)
     {
         playerDetailsField.text = player.Name;
         scoreCountField.text = player.Score.ToString();
         popUpHandler.ShowMessage("Round", player.Name + "'s round", "Ok", MessageType.RoundStart);
     }
-
+    /// <summary>
+    /// Showing question details at the end of the round, like correct answer.
+    /// </summary>
+    /// <param name="question">Actual question</param>
     public void ShowQuestionDetails(Question question)
     {
         string questionString = "Round completed, the correct answer was: " + question.correct_answer;
         popUpHandler.ShowMessage("Next question", questionString, "Next", MessageType.QuestionEnd);
     }
-
+    /// <summary>
+    /// Refreshing the timer
+    /// </summary>
+    /// <param name="player">Actual player</param>
     public void RefreshTime(Player player)
     {
         float time = player.RemainedTime;
@@ -153,6 +180,10 @@ public class UIController : MonoBehaviour
         string rTime = String.Format("{0:00}:{1:00}", minutes, seconds);
         timerField.text = rTime;
     }
+    /// <summary>
+    /// Showing the result of the game. It will list players ant their scores.
+    /// </summary>
+    /// <param name="players">All of the players</param>
     public void ShowResult(Player[] players)
     {
         string resultMessage = "";
@@ -163,6 +194,9 @@ public class UIController : MonoBehaviour
         popUpHandler.ShowMessage("Result", resultMessage, "Done", MessageType.Info);
 
     }
+    /// <summary>
+    /// Clearing the answers grid, delete all of the prefab instances.
+    /// </summary>
     void ClearGrid()
     {
         foreach (Transform child in answerGrid.transform)
@@ -173,6 +207,10 @@ public class UIController : MonoBehaviour
     #endregion
 
     #region Menu Methods
+    /// <summary>
+    /// Updating the category dropdown menu whith the list of categories.
+    /// </summary>
+    /// <param name="categories">Categories</param>
     public void UpdateCategories(List<Category> categories)
     {
         categoriesField.ClearOptions();
@@ -183,23 +221,34 @@ public class UIController : MonoBehaviour
         }
         categoriesField.AddOptions(list);
     }
-
+    /// <summary>
+    /// Subscribing for the on click event of the start button.
+    /// </summary>
+    /// <param name="action">Callback for the game start event</param>
     public void SubscribeToStart(StartGaneEventHandler action)
     {
         StartEventAsync += action;
     }
-
+    /// <summary>
+    /// Validating the form of the menu panel. It checks the default parameters.
+    /// </summary>
+    /// <param name="amount">String of the amount of question</param>
+    /// <param name="category">Selected vategory</param>
+    /// <param name="playersCount">String of the chosen number of players</param>
+    /// <returns></returns>
     public bool ValidateMenuForm(string amount, string category, string playersCount)
     {
-        if (!int.TryParse(amount, out int am) || am <= 0)
+        if (!int.TryParse(amount, out int am) || am < 1 || am > 50)
             return false;
         if (category == "Loading...")
             return false;
-        if (!int.TryParse(playersCount, out int playersNum) || playersNum <= 0)
+        if (!int.TryParse(playersCount, out int playersNum) || playersNum < 1 || playersNum > 8)
             return false;
         return true;
     }
-
+    /// <summary>
+    /// On Click event for start button
+    /// </summary>
     public async void OnClickStart()
     {
         string amount = amountField.text;

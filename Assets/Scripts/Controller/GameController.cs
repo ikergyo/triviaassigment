@@ -32,7 +32,13 @@ public class GameController : MonoBehaviour
         uic.UpdateCategories(categories);
         uic.SubscribeToStart(InitializeGameAsync);
     }
-
+    /// <summary>
+    /// Initializing the game.
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="category"></param>
+    /// <param name="playerCount"></param>
+    /// <returns>There is no return value</returns>
     public async Task InitializeGameAsync(string amount, string category, int playerCount = 1)
     {
         uic.SetActivePanel("LoadingPanel");
@@ -59,14 +65,18 @@ public class GameController : MonoBehaviour
             NextRound();
         }
     }
-
+    /// <summary>
+    /// Calculating the next question and sending it to the UI
+    /// </summary>
     public void NextQuestion()
     {
         Question question = gameState.NextQuestion();
         Answer[] answers = GenerateAnswers(question);        
         uic.ShowQuestion(question.question, gameState.QuestionCounter, answers);
     }
-
+    /// <summary>
+    /// Calculating the next round, determines the next player.
+    /// </summary>
     void NextRound()
     {
         gameState.IsRoundActive = false;
@@ -77,6 +87,10 @@ public class GameController : MonoBehaviour
         }
         uic.ShowPlayerStart(gameState.ActualPlayer);
     }
+    /// <summary>
+    /// Question end method. Checking is there questions in the questions list or the game is finished.
+    /// If there are questions it call NextQuestion() and NextRound()
+    /// </summary>
     void FinishQuestion()
     {
         if(!gameState.IsQuestionNull())
@@ -89,32 +103,48 @@ public class GameController : MonoBehaviour
         NextQuestion();
         NextRound();
     }
+    /// <summary>
+    /// Uninitializing the game and showing the result of the game.
+    /// </summary>
     void FinishGame()
     {
         UninitializeGame();
         uic.ShowResult(gameState.Players);
         uic.SetActivePanel("MenuPanel");
     }
-   
+   /// <summary>
+   /// Subscribed method for the answer on click event.
+   /// </summary>
+   /// <param name="answer">Choosed answer</param>
     void OnClickAnswerPressed(Answer answer)
     {
         if (answer.IsCorrect)
             gameState.IncreasePlayerScore();
         NextRound();
     }
+    /// <summary>
+    /// Subscribed method for the PopUp button on click event.
+    /// </summary>
+    /// <param name="messageType"></param>
     void OnClickPopUpPressed(MessageType messageType)
     {
         if(messageType == MessageType.RoundStart)
             gameState.IsRoundActive = true;
     }
-
+    /// <summary>
+    /// Unitializing the game, it is useful at the end of the game.
+    /// </summary>
     void UninitializeGame()
     {
         AnswerScript.UnsubscribeFromPressedEvent(OnClickAnswerPressed);
         uic.UnsubscribeFromPopUp(OnClickPopUpPressed);
         isStateInitialized = false;
     }
-
+    /// <summary>
+    /// Generating the answers with random logic. Putting the correct answer to a random place.
+    /// </summary>
+    /// <param name="question">Actual questions</param>
+    /// <returns>Answers array about the generated answers</returns>
     Answer[] GenerateAnswers(Question question)
     {
         Answer[] answers = new Answer[question.incorrect_answers.Length + 1];

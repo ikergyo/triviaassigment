@@ -23,7 +23,12 @@ public class OpenTriviaApi : ITriviaApi
         content = new Dictionary<string, string>();
         client = new HttpClient();
     }
-
+    /// <summary>
+    /// Creating a request to get the questions from OpenTrivia DB
+    /// </summary>
+    /// <param name="amount">Amount of the questions</param>
+    /// <param name="category">Category</param>
+    /// <returns>Returns the collected questions</returns>
     public async Task<Question[]> GetQuestions(string amount, string category = null)
     {
         content.Add("amount", amount.ToString());
@@ -36,6 +41,10 @@ public class OpenTriviaApi : ITriviaApi
         QuestionList ql = JsonUtility.FromJson<QuestionList>(response);
         return ql.results;
     }
+    /// <summary>
+    /// Creating a reuqest to get the categories from OpenTrivia DB
+    /// </summary>
+    /// <returns>Returns the categories</returns>
     public async Task<List<Category>> GetCategories()
     {
         string response = await client.GetStringAsync(categoryQuery);
@@ -60,6 +69,9 @@ public class OpenTriviaApi : ITriviaApi
             }
         }
     }
+    /// <summary>
+    /// Generateing the final uri from the content dictionary
+    /// </summary>
     void GenerateUri()
     {
         foreach (var item in content)
@@ -68,6 +80,10 @@ public class OpenTriviaApi : ITriviaApi
         }
         content.Clear();
     }
+    /// <summary>
+    /// Adding parameter to the uri string
+    /// </summary>
+    /// <param name="param">Parameter</param>
     void AddParameter(string param)
     {
         if (uri.Query != null && uri.Query.Length > 1)
@@ -75,4 +91,5 @@ public class OpenTriviaApi : ITriviaApi
         else
             uri.Query = param;
     }
+
 }
